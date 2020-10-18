@@ -1,6 +1,8 @@
 import Structures
+import Algorithms
 
 
 main = do 
-        let m = read "{9 . . \n x . x \n . . 1}" :: Matrix
-        print m
+        let m = generate
+        let sol = solve m
+        print sol
