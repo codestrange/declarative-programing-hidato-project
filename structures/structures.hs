@@ -1,11 +1,23 @@
+module Structures
+( Cell
+, Matrix
+, rows
+, columns
+, matrix
+, row
+, column
+, value
+) where
+
 import System.IO
 import Data.Char (isDigit)
 import Data.List
 
+
 data Cell = Cell { row :: Int
-                 , column :: Int
-                 , value :: Int
-                 } deriving (Eq)
+                , column :: Int
+                , value :: Int
+                } deriving (Eq)
 
 instance Ord Cell where
     compare cell1 cell2
