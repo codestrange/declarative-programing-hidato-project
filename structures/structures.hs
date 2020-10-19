@@ -1,12 +1,6 @@
 module Structures
-( Cell
-, Matrix
-, rows
-, columns
-, matrix
-, row
-, column
-, value
+( Cell (..)
+, Matrix (..)
 ) where
 
 import System.IO
