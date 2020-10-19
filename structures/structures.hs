@@ -1,12 +1,16 @@
 module Structures
 ( Cell (..)
 , Matrix (..)
+, countInMatrix
+, countFree
+, countObstacles
+, isAdjacent
+, isValidMatrix
+, isFinalMatrix
 ) where
 
-import System.IO
 import Data.Char (isDigit)
 import Data.List
-
 
 data Cell = Cell { row :: Int
                 , column :: Int
@@ -37,6 +41,13 @@ instance Read Cell where
         in 
             [(Cell row column value, rest7) | 
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
+
+isAdjacent :: Cell -> Cell -> Bool
+isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)
+            | Cell f1 c1 v1 == Cell f2 c2 v2           = False
+            | abs (f1 - f2) >= 2 || abs (c1 - c2) >= 2 = False
+            | v1 == (-1) || v2 == (-1)                 = False
+            | otherwise                                = True
 
 getCellChar :: Cell -> Int -> String
 getCellChar (Cell _ _ value) size
@@ -92,11 +103,34 @@ parseMatrixRecursive rowNum (s:rest)
 
 parseMatrix = parseMatrixRecursive 1
 
-validMatrix :: Matrix -> Bool
-validMatrix m = let allCells      = length (matrix m) == rows m * columns m
-                    correctValues = all (\(Cell _ _ val) -> val >= -1 && val <= rows m * columns m) 
+countInMatrix :: Int -> Matrix -> Int
+countInMatrix val (Matrix _ _ cells) =
+                    foldl (\acc cell -> if value cell == val then acc + 1 else acc) 0 cells
+
+countObstacles :: Matrix -> Int
+countObstacles = countInMatrix (-1) 
+
+countFree :: Matrix -> Int
+countFree = countInMatrix 0 
+
+isValidMatrix :: Matrix -> Bool
+isValidMatrix m = let allCells       = length (matrix m) == rows m * columns m
+                      correctValues  = all (\(Cell _ _ val) -> val >= -1 && val <= rows m * columns m - countObstacles m) 
                                         (matrix m)
-                    in correctValues && allCells
+                  in correctValues && allCells
+
+isFinalMatrix :: Matrix -> Bool
+isFinalMatrix (Matrix rows columns cells)
+        | or [ value cell == 0 | cell <- cells ]             = False
+        | not (and [ countInMatrix val (Matrix rows columns cells) == 1
+                                     | val <- [1..(rows * columns - countObstacles (Matrix rows columns cells))]
+                                      ])                     = False
+        | not (and [ or [ value cell1 + 1 == value cell2 | cell2 <- cells, isAdjacent cell1 cell2 ]
+                                     | cell1 <- cells,
+                                      value cell1 /= fvalue,
+                                      value cell1 /= (-1) ]) = False
+        | otherwise                                          = True
+        where fvalue = maximum [value cell | cell <- cells]
 
 instance Read Matrix where
     readsPrec _ input =
@@ -104,4 +138,4 @@ instance Read Matrix where
             rowNum              = maximum [ row cell | cell <- matrixCells ]
             columnNum           = maximum [ column cell | cell <- matrixCells ]
             theMatrix           = Matrix rowNum columnNum matrixCells
-        in [(theMatrix, rest) | validMatrix theMatrix]
+        in [(theMatrix, rest) | isValidMatrix theMatrix]
