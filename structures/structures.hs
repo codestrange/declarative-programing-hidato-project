@@ -7,6 +7,8 @@ module Structures
 , isAdjacent
 , isValidMatrix
 , isFinalMatrix
+, editMatrixCell
+, findCellByValue
 ) where
 
 import Data.Char (isDigit)
@@ -15,7 +17,10 @@ import Data.List
 data Cell = Cell { row :: Int
                 , column :: Int
                 , value :: Int
-                } deriving (Eq)
+                }
+
+instance Eq Cell where
+    c1 == c2 = row c1 == row c2 && column c1 == column c2
 
 instance Ord Cell where
     compare cell1 cell2
@@ -139,3 +144,9 @@ instance Read Matrix where
             columnNum           = maximum [ column cell | cell <- matrixCells ]
             theMatrix           = Matrix rowNum columnNum matrixCells
         in [(theMatrix, rest) | isValidMatrix theMatrix]
+
+editMatrixCell :: Matrix -> Cell -> Matrix
+editMatrixCell (Matrix r c cells) newCell = Matrix r c [ if cell == newCell then newCell else cell  | cell <- cells ] 
+
+findCellByValue :: Matrix -> Int -> [Cell]
+findCellByValue m val =  [ cell | cell <- matrix m, value cell == val ]
