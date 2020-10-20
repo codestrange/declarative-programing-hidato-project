@@ -40,4 +40,6 @@ solveAll :: Matrix -> [Matrix]
 solveAll m = solveRecursiveDFS m 1 (Cell 0 0 0)
 
 solve :: Matrix -> Matrix
-solve m = head (solveRecursiveDFS m 1 (Cell 0 0 0))
+solve m = let solves = solveRecursiveDFS m 1 (Cell 0 0 0)
+          in case solves of [] -> error "Solve not found"
+                            (x: xs) -> x
