@@ -1,0 +1,1 @@
+ghc -o bin/program hidato.hs structures/structures.hs algorithms/algorithms.hs
