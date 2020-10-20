@@ -76,7 +76,7 @@ showMatrixRow rowCells size = unwords [getCellChar cell size | cell <- rowCells 
 
 instance Show Matrix where
     show m = "{" ++ intercalate "\n " [ showMatrixRow (sort (filter (\(Cell crow _ _) -> crow == row) (matrix m))) maxSize |
-                            row <- [1..(rows m)]] ++ "}" where
+                            row <- [1..(rows m)]] ++ "}\n" where
                             maxSize = maximum [length (getCellChar cell 0) | cell <- matrix m]
 
 parseMatrixCell :: String -> (Int, String)
