@@ -121,7 +121,7 @@ countFree = countInMatrix 0
 isValidMatrix :: Matrix -> Bool
 isValidMatrix m = let allCells       = length (matrix m) == rows m * columns m
                       correctValues  = all (\(Cell _ _ val) -> val >= -1 && val <= rows m * columns m - countObstacles m) 
-                                        (matrix m)
+                                        (matrix m)                    
                   in correctValues && allCells
 
 isFinalMatrix :: Matrix -> Bool
