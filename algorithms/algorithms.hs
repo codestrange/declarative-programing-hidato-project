@@ -19,5 +19,13 @@ stepMatrix step m = if null pCells
                              prevCells = findCellByValue m (step-1)
                              prevCell  = if null prevCells then Cell 0 0 0  else head prevCells 
 
+solveRecursiveBFS :: [(Matrix, Int)] -> [Matrix]
+solveRecursiveBFS [] = []
+solveRecursiveBFS ((actualMatrix, step):queue) 
+      | isFinalMatrix actualMatrix = actualMatrix:solveRecursiveBFS queue
+      | otherwise                  = let toAdd = [ (matrix, step + 1) 
+                                                      | matrix <- stepMatrix step actualMatrix]
+                                     in solveRecursiveBFS (queue ++ toAdd)
+
 solve :: Matrix -> Matrix
 solve m = m
