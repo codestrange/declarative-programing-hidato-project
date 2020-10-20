@@ -1,0 +1,1 @@
+ghci hidato.hs structures/structures.hs algorithms/algorithms.hs
