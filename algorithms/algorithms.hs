@@ -27,5 +27,11 @@ solveRecursiveBFS ((actualMatrix, step):queue)
                                                       | matrix <- stepMatrix step actualMatrix]
                                      in solveRecursiveBFS (queue ++ toAdd)
 
+solveRecursiveDFS :: (Matrix, Int) -> [Matrix]
+solveRecursiveDFS (actualMatrix, step)
+      | isFinalMatrix actualMatrix = [actualMatrix]
+      | otherwise                  = let toAdd = stepMatrix step actualMatrix
+                                     in concat [ solveRecursiveDFS (matrix, step+1) | matrix <- toAdd ]
+
 solve :: Matrix -> Matrix
 solve m = m
