@@ -1,6 +1,7 @@
 module Algorithms
 ( generate
 , solve
+, solveAll
 ) where
 
 import Structures
@@ -33,5 +34,8 @@ solveRecursiveDFS (actualMatrix, step)
       | otherwise                  = let toAdd = stepMatrix step actualMatrix
                                      in concat [ solveRecursiveDFS (matrix, step+1) | matrix <- toAdd ]
 
+solveAll :: Matrix -> [Matrix]
+solveAll m = solveRecursiveDFS (m, 1)
+
 solve :: Matrix -> Matrix
-solve m = m
+solve m = head (take 1 (solveRecursiveDFS (m, 1)))
