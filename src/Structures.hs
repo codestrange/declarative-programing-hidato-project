@@ -191,7 +191,7 @@ instance Read Matrix where
         in [(theMatrix, rest) | isValidMatrix theMatrix]
 
 editMatrixCell :: Matrix -> Cell -> Matrix
-editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.fromList [ if cell == newCell then newCell else cell | cell <- Set.elems cells ] :: Set Cell )
+editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.insert newCell cells)
 
 findCellByValue :: Matrix -> Int -> Set Cell
 findCellByValue m val = Set.filter (\cell -> value cell == val) $ matrix m
