@@ -1,0 +1,48 @@
+name:                hidato
+version:             0.1.0.0
+github:              "codestrange/declarative-programing-hidato-project"
+license:             MIT
+author:              "CodeStrange"
+maintainer:          "codestrangeofficial@gmail.com"
+copyright:           "2020 CodeStrange"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://https://github.com/codestrange/declarative-programing-hidato-project#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+
+library:
+  source-dirs: src
+
+executables:
+  hidato-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hidato
+
+tests:
+  hidato-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - hidato

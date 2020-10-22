@@ -1,10 +1,10 @@
 .DEFAULT_GOAL=help
 
-runi: hidato.hs structures/structures.hs algorithms/algorithms.hs ## Ejecutar el programa en el interprete
-	ghci hidato.hs structures/structures.hs algorithms/algorithms.hs
+runi: app/Main.hs src/Structures.hs src/Algorithms.hs ## Ejecutar el programa en el interprete
+	ghci app/Main.hs src/Structures.hs src/Algorithms.hs
 
-compile: hidato.hs structures/structures.hs algorithms/algorithms.hs ## Compilar el programa
-	ghc -o bin/program hidato.hs structures/structures.hs algorithms/algorithms.hs
+compile: app/Main.hs src/Structures.hs src/Algorithms.hs ## Compilar el programa
+	ghc -o bin/program app/Main.hs src/Structures.hs src/Algorithms.hs
 
 run: compile bin/program ## Compilar y ejucutar el programa
 	./bin/program

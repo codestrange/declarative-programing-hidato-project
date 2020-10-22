@@ -1,1 +1,1 @@
-ghc -o bin/program hidato.hs structures/structures.hs algorithms/algorithms.hs
+ghc -o bin/program app/Main.hs src/Structures.hs src/Algorithms.hs

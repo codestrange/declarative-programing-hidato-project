@@ -1,0 +1,65 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 1adf0231ee1c9c3fa35bb688d8f64a8891b7f4ed5a43a7f6bad46e2a7c24f6c1
+
+name:           hidato
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://https://github.com/codestrange/declarative-programing-hidato-project#readme>
+homepage:       https://github.com/codestrange/declarative-programing-hidato-project#readme
+bug-reports:    https://github.com/codestrange/declarative-programing-hidato-project/issues
+author:         CodeStrange
+maintainer:     codestrangeofficial@gmail.com
+copyright:      2020 CodeStrange
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/codestrange/declarative-programing-hidato-project
+
+library
+  exposed-modules:
+      Algorithms
+      Structures
+  other-modules:
+      Paths_hidato
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , containers
+  default-language: Haskell2010
+
+executable hidato-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_hidato
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , hidato
+  default-language: Haskell2010
+
+test-suite hidato-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_hidato
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , hidato
+  default-language: Haskell2010
