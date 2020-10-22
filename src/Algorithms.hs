@@ -4,6 +4,7 @@ module Algorithms
 , solveAll
 ) where
 
+import System.Random
 import Structures
 import Data.Set (Set, lookupMin, lookupMax)
 import qualified Data.Set as Set
@@ -14,10 +15,10 @@ import qualified Data.Map as Map
 generate :: Matrix
 generate = read "{. x x x x x x x x \n . 8 x x x x x x x \n . . 11 x x x x x x \n 29 . 10 . x x x x x \n 30 . . . . x x x x \n . 31  1 38  .  . x x x \n . 32 . . 39 41 . x x \n . . . 22 . . 42 . x \n . . . . . . . 44 45}" :: Matrix
 
-stepMatrix :: Int -> Matrix -> Cell -> Map Int Cell -> [(Matrix, Cell)]
-stepMatrix step m@(Matrix rs cs ma) prevCell map = if Map.notMember step map
+stepMatrix :: Int -> Matrix -> Cell -> Map Int Cell -> StdGen -> [(Matrix, Cell)]
+stepMatrix step m@(Matrix rs cs ma) prevCell map gen = if Map.notMember step map
                         then [
-                              (Matrix rs cs (Set.insert cell ma), cell) | cell <- getAdjacents prevCell rs cs step,
+                              (Matrix rs cs (Set.insert cell ma), cell) | cell <- getAdjacents prevCell rs cs step gen,
                               let actCell = Set.elemAt (Set.findIndex cell $ ma) ma,
                               value actCell == 0
                         ]
@@ -35,16 +36,16 @@ buildMap ma@(Matrix r c m) = Set.foldl (\acc cell -> Map.insert (value cell) cel
 --                                                       | matrix <- stepMatrix step actualMatrix]
 --                                      in solveRecursiveBFS (queue ++ toAdd)
 
-solveRecursiveDFS :: Matrix -> Int -> Cell -> Int -> Map Int Cell -> [Matrix]
-solveRecursiveDFS actualMatrix step prevCell obs map
+solveRecursiveDFS :: Matrix -> Int -> Cell -> Int -> Map Int Cell -> StdGen -> [Matrix]
+solveRecursiveDFS actualMatrix step prevCell obs map gen
       | step == obs + 1 = [actualMatrix]
-      | otherwise = let toAdd = stepMatrix step actualMatrix prevCell map
-                    in concat [ solveRecursiveDFS matrix (step + 1) prevCell obs map | (matrix, prevCell) <- toAdd ]
+      | otherwise = let toAdd = stepMatrix step actualMatrix prevCell map gen
+                    in concat [ solveRecursiveDFS matrix (step + 1) prevCell obs map gen | (matrix, prevCell) <- toAdd ]
 
-solveAll :: Matrix -> [Matrix]
-solveAll m = solveRecursiveDFS m 1 (Cell 0 0 0) ((rows m) * (columns m)  - countObstacles m) $ buildMap m
+solveAll :: Matrix -> StdGen -> [Matrix]
+solveAll m gen = solveRecursiveDFS m 1 (Cell 0 0 0) ((rows m) * (columns m)  - countObstacles m) (buildMap m) gen
 
-solve :: Matrix -> Matrix
-solve m = let solves = solveAll m
+solve :: Matrix -> StdGen -> Matrix
+solve m gen = let solves = solveAll m gen
           in case solves of [] -> error "Solve not found"
                             (x: xs) -> x

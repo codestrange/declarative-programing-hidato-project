@@ -16,6 +16,7 @@ import Data.Char (isDigit)
 import Data.List
 import Data.Set (Set, lookupMin, lookupMax)
 import qualified Data.Set as Set
+import System.Random
 
 data Cell = Cell { row :: Int
                 , column :: Int
@@ -50,8 +51,8 @@ instance Read Cell where
             [(Cell row column value, rest7) | 
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
 
-getAdjacents :: Cell -> Int -> Int -> Int -> [Cell]
-getAdjacents (Cell r c v) rs cs s = [Cell nr nc s | dr <- [-1, 0, 1], dc <- [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
+getAdjacents :: Cell -> Int -> Int -> Int -> StdGen -> [Cell]
+getAdjacents (Cell r c v) rs cs s gen = [Cell nr nc s | dr <- [-1, 0, 1], dc <- [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
 
 isAdjacent :: Cell -> Cell -> Bool
 isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)

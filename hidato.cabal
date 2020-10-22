@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1adf0231ee1c9c3fa35bb688d8f64a8891b7f4ed5a43a7f6bad46e2a7c24f6c1
+-- hash: 8990a2fc1a1f4fa5cf6bcf0dc27fc8585348d19663dd6d611e9d1f7fb613dc4c
 
 name:           hidato
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , random
   default-language: Haskell2010
 
 executable hidato-exe
@@ -48,6 +49,7 @@ executable hidato-exe
       base >=4.7 && <5
     , containers
     , hidato
+    , random
   default-language: Haskell2010
 
 test-suite hidato-test
@@ -62,4 +64,5 @@ test-suite hidato-test
       base >=4.7 && <5
     , containers
     , hidato
+    , random
   default-language: Haskell2010
