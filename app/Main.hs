@@ -12,16 +12,19 @@ main = do
         let gen = mkStdGen seed
         let seeds = randoms gen :: [Int]
 
-        print "Introduzca el MENOR tamaño posible del tablero:"
-        minString <- getLine
-        let minInput = read minString :: Int
-        print "Introduzca el MAYOR tamaño posible del tablero:"
-        maxString <- getLine
-        let maxInput = read maxString :: Int
-        print "Introduzca la RAZÓN de obstaculos del tablero:"
+        print "Introduzca la cantidad de filas:"
+        rowsString <- getLine
+        let rows = read rowsString :: Int
+        print "Introduzca la cantidad de columnas:"
+        columnsString <- getLine
+        let columns = read columnsString :: Int
+        print "Introduzca el radio de obstaculos:"
         ratioString <- getLine
-        let ratioInput = read ratioString :: Float
-        m <- generateRandom minInput maxInput ratioInput
+        let ratio = read ratioString :: Float
+        print "Introduzca la dificultad:"
+        dificultyString <- getLine
+        let dificulty = read dificultyString :: Dificulty
+        m <- generateGame rows columns ratio dificulty
         print m
         let sol = solve m seeds
         print sol
