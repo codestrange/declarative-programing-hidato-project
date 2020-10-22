@@ -1,7 +1,9 @@
 module Algorithms
-( generate
+( Dificulty(..)
+, generate
 , solve
 , solveAll
+, generateGame
 , generateRandom
 ) where
 
@@ -29,7 +31,30 @@ generateRandom rn cn ratio = do
                               let obs_matrix = foldl editMatrixCell matrix obs
                               first_cell <- genRCell rn cn 1
                               return (editMatrixCell obs_matrix first_cell)
-                                    
+
+data Dificulty = Easy | Normal | Hard deriving (Ord, Eq, Show, Read)
+
+emptyRatio :: Dificulty -> Float
+emptyRatio Easy = 50/100
+emptyRatio Normal = 60/100
+emptyRatio Hard = 70/100
+
+generateGame :: Int -> Int -> Float -> Dificulty -> IO Matrix
+generateGame rn cn ratio dif = do
+                                template <- generateRandom rn cn ratio
+                                seed <- randomIO :: IO Int
+                                let gen = mkStdGen seed
+                                let seeds = randoms gen :: [Int]
+                                let solution = solve template seeds
+                                let cant_obs = countObstacles solution
+                                let total = rn * cn - cant_obs
+                                let cant_empty = floor $ fromIntegral total * emptyRatio dif
+                                rawEmpty <- sequence [genRCell rn cn 0 | _ <- [1..cant_empty]]
+                                let empty = filter (\cell -> let Just act = Set.lookupGE cell (matrix solution)
+                                                            in value act > 1 && value act < total)
+                                                rawEmpty
+                                let game = foldl editMatrixCell solution empty
+                                return game
 
 generate :: Matrix
 generate = read "{. x x x x x x x x \n . 8 x x x x x x x \n . . 11 x x x x x x \n 29 . 10 . x x x x x \n 30 . . . . x x x x \n . 31  1 38  .  . x x x \n . 32 . . 39 41 . x x \n . . . 22 . . 42 . x \n . . . . . . . 44 45}" :: Matrix
@@ -38,7 +63,7 @@ stepMatrix :: Int -> Matrix -> Cell -> Map Int Cell -> [Int] -> [(Matrix, Cell)]
 stepMatrix step m@(Matrix rs cs ma) prevCell map seeds = if Map.notMember step map
                         then [
                               newMatrix | cell <- getAdjacents prevCell rs cs step seeds,
-                              let actCell = Set.elemAt (Set.findIndex cell $ ma) ma,
+                              let actCell = Set.elemAt (Set.findIndex cell ma) ma,
                               value actCell == 0,
                               let newMatrix = (Matrix rs cs (Set.insert cell ma), cell)
                         ]
@@ -63,7 +88,7 @@ solveRecursiveDFS actualMatrix step prevCell obs map seeds
                     in concat [ solveRecursiveDFS matrix (step + 1) prevCell obs map (tail seeds) | (matrix, prevCell) <- toAdd ]
 
 solveAll :: Matrix -> [Int] -> [Matrix]
-solveAll m seeds = solveRecursiveDFS m 1 (Cell 0 0 0) ((rows m) * (columns m)  - countObstacles m) (buildMap m) seeds
+solveAll m = solveRecursiveDFS m 1 (Cell 0 0 0) (rows m * columns m  - countObstacles m) (buildMap m)
 
 solve :: Matrix -> [Int] -> Matrix
 solve m seeds = let solves = solveAll m seeds
