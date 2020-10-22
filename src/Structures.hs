@@ -10,6 +10,7 @@ module Structures
 , editMatrixCell
 , findCellByValue
 , getAdjacents
+, blankMatrix
 ) where
 
 import Data.Char (isDigit)
@@ -128,6 +129,9 @@ parseMatrixRecursive rowNum (s:rest)
 
 parseMatrix = parseMatrixRecursive 1
 
+blankMatrix :: Int -> Int -> Matrix
+blankMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column 0| row <-[1..rows], column <- [1..columns]] :: Set Cell)
+
 countInMatrix :: Int -> Matrix -> Int
 countInMatrix val (Matrix _ _ cells) =
                     foldl (\acc cell -> if value cell == val then acc + 1 else acc) 0 cells
@@ -166,7 +170,7 @@ instance Read Matrix where
         in [(theMatrix, rest) | isValidMatrix theMatrix]
 
 editMatrixCell :: Matrix -> Cell -> Matrix
-editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.fromList ([ if cell == newCell then newCell else cell | cell <- Set.elems cells ]) :: Set Cell )
+editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.fromList [ if cell == newCell then newCell else cell | cell <- Set.elems cells ] :: Set Cell )
 
 findCellByValue :: Matrix -> Int -> Set Cell
 findCellByValue m val = Set.filter (\cell -> value cell == val) $ matrix m
