@@ -1,1 +1,1 @@
-ghci hidato.hs structures/structures.hs algorithms/algorithms.hs
+ghci app/Main.hs src/Structures.hs src/Algorithms.hs

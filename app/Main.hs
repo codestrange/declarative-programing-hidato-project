@@ -1,3 +1,5 @@
+module Main where
+
 import Structures
 import Algorithms
 
