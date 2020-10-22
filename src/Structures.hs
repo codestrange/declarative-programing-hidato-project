@@ -10,6 +10,7 @@ module Structures
 , editMatrixCell
 , findCellByValue
 , getAdjacents
+, genShuffle
 , blankMatrix
 ) where
 
@@ -18,6 +19,9 @@ import Data.List
 import Data.Set (Set, lookupMin, lookupMax)
 import qualified Data.Set as Set
 import System.Random
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Debug.Trace
 
 data Cell = Cell { row :: Int
                 , column :: Int
@@ -52,8 +56,25 @@ instance Read Cell where
             [(Cell row column value, rest7) | 
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
 
-getAdjacents :: Cell -> Int -> Int -> Int -> StdGen -> [Cell]
-getAdjacents (Cell r c v) rs cs s gen = [Cell nr nc s | dr <- [-1, 0, 1], dc <- [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
+getAdjacents :: Cell -> Int -> Int -> Int -> [Int] -> [Cell]
+getAdjacents (Cell r c v) rs cs s seeds = [Cell nr nc s | dr <- genShuffle seeds [-1, 0, 1], dc <- genShuffle seeds [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
+
+fisherYatesStep :: RandomGen g => (Map Int Int, g) -> (Int, Int) -> (Map Int Int, g)
+fisherYatesStep (m, gen) (i, x) = ((Map.insert j x . Map.insert i (m Map.! j)) m, gen')
+  where
+    (j, gen') = randomR (0, i) gen
+
+fisherYates :: RandomGen g => g -> [Int] -> ([Int], g)
+fisherYates gen [] = ([], gen)
+fisherYates gen l = 
+  toElems $ foldl fisherYatesStep (initial (head l) gen) (numerate (tail l))
+  where
+    toElems (x, y) = (Map.elems x, y)
+    numerate = zip [1..]
+    initial x gen = (Map.singleton 0 x, gen)
+
+genShuffle :: [Int] -> [Int] -> [Int]
+genShuffle seeds list = let (xs, _) = fisherYates (mkStdGen $ head seeds) list in xs
 
 isAdjacent :: Cell -> Cell -> Bool
 isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)
