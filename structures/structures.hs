@@ -9,10 +9,13 @@ module Structures
 , isFinalMatrix
 , editMatrixCell
 , findCellByValue
+, getAdjacents
 ) where
 
 import Data.Char (isDigit)
 import Data.List
+import Data.Set (Set, lookupMin, lookupMax)
+import qualified Data.Set as Set
 
 data Cell = Cell { row :: Int
                 , column :: Int
@@ -33,19 +36,22 @@ instance Show Cell where
 
 instance Read Cell where
     readsPrec _ input =
-        let (opar:rest1)     = input
+        let (opar : rest1)   = input
             (rows, rest2)    = span isDigit rest1
             (comma1:rest3)   = rest2
             (columns, rest4) = span isDigit rest3
-            (comma2:rest5)   = rest4
+            (comma2 : rest5) = rest4
             (values, rest6)  = span isDigit rest5
-            (cpar:rest7)         = rest6
+            (cpar : rest7)   = rest6
             row              = read rows :: Int
             column           = read columns :: Int   
             value            = read values :: Int
         in 
             [(Cell row column value, rest7) | 
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
+
+getAdjacents :: Cell -> Int -> Int -> Int -> [Cell]
+getAdjacents (Cell r c v) rs cs s = [Cell nr nc s | dr <- [-1, 0, 1], dc <- [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
 
 isAdjacent :: Cell -> Cell -> Bool
 isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)
@@ -63,21 +69,34 @@ getCellChar (Cell _ _ value) size
         valueStr    = show value
         lenValueStr = length $ show value
 
+cellEqual :: Cell -> Cell -> Bool
+cellEqual x y = row x == row y && column x == column y && value x == value y
+
+cellEquals' :: [Cell] -> [Cell] -> Bool -> Bool
+callEquals' _ _ False = False
+cellEquals' [] [] x = x && True
+cellEquals' _ [] _ = False
+cellEquals' [] _ _ = False
+cellEquals' (x:xs) (y:ys) b = cellEquals' xs ys (cellEqual x y)
+
+cellEquals :: [Cell] -> [Cell] -> Bool
+cellEquals xs ys = cellEquals' xs ys True
+
 data Matrix = Matrix { rows :: Int
                      , columns :: Int
-                     , matrix :: [Cell]
+                     , matrix :: Set Cell
                      }
 
 instance Eq Matrix where
-    m1 == m2 = rows m1 == rows m2 && columns m1 == columns m2 && sort (matrix m1) == sort (matrix m2)
+    m1 == m2 = rows m1 == rows m2 && columns m1 == columns m2 && cellEquals (Set.elems $ matrix m1) (Set.elems $ matrix m2)
 
 showMatrixRow :: [Cell] -> Int -> String
 showMatrixRow rowCells size = unwords [getCellChar cell size | cell <- rowCells ]
 
 instance Show Matrix where
-    show m = "{" ++ intercalate "\n " [ showMatrixRow (sort (filter (\(Cell crow _ _) -> crow == row) (matrix m))) maxSize |
+    show m = "{" ++ intercalate "\n " [ showMatrixRow (sort (filter (\(Cell crow _ _) -> crow == row) (Set.elems $ matrix m))) maxSize |
                             row <- [1..(rows m)]] ++ "}\n" where
-                            maxSize = maximum [length (getCellChar cell 0) | cell <- matrix m]
+                            maxSize = maximum [length (getCellChar cell 0) | cell <- Set.elems $ matrix m]
 
 parseMatrixCell :: String -> (Int, String)
 parseMatrixCell "" = (-2, "")
@@ -88,23 +107,23 @@ parseMatrixCell (s:rest)
     | s == 'x'  = (-1, rest)
     | otherwise = (-2, s:rest)
 
-parseMatrixRowRecursive :: Int -> Int -> String -> ([Cell], String)
+parseMatrixRowRecursive :: Int -> Int -> String -> (Set Cell, String)
 parseMatrixRowRecursive rowNum columnNum input = 
     let (_, rinput)    = span (' '==) input
         (value, rest1) = parseMatrixCell rinput
-    in if value == -2 then ([], rest1) else
-        let (parsedCells, frest) = parseMatrixRowRecursive rowNum (columnNum+1) rest1
+    in if value == -2 then (Set.empty, rest1) else
+        let (parsedCells, frest) = parseMatrixRowRecursive rowNum (columnNum + 1) rest1
             parsedCell           = Cell rowNum columnNum value
-        in (parsedCell:parsedCells, frest)
+        in (Set.insert parsedCell parsedCells, frest)
 
 parseMatrixRow rowNum = parseMatrixRowRecursive rowNum 1
 
-parseMatrixRecursive :: Int -> String -> ([Cell], String)
+parseMatrixRecursive :: Int -> String -> (Set Cell, String)
 parseMatrixRecursive rowNum (s:rest)
     | (s == '{' && rowNum == 1) || s == '\n' = let (parsedRow, rest1)  = parseMatrixRow rowNum rest
-                                                   (parsedRows, rest2) = parseMatrixRecursive (rowNum+1) rest1
-                                                in (parsedRow ++ parsedRows, rest2)
-    | s == '}'                               = ([], rest)
+                                                   (parsedRows, rest2) = parseMatrixRecursive (rowNum + 1) rest1
+                                                in (Set.union parsedRow parsedRows, rest2)
+    | s == '}'                               = (Set.empty, rest)
 
 parseMatrix = parseMatrixRecursive 1
 
@@ -124,29 +143,29 @@ isValidMatrix m = let allCells       = length (matrix m) == rows m * columns m
                                         (matrix m)                    
                   in correctValues && allCells
 
-isFinalMatrix :: Matrix -> Bool
-isFinalMatrix (Matrix rows columns cells)
-        | or [ value cell == 0 | cell <- cells ]             = False
-        | not (and [ countInMatrix val (Matrix rows columns cells) == 1
-                                     | val <- [1..(rows * columns - countObstacles (Matrix rows columns cells))]
-                                      ])                     = False
-        | not (and [ or [ value cell1 + 1 == value cell2 | cell2 <- cells, isAdjacent cell1 cell2 ]
-                                     | cell1 <- cells,
+isFinalMatrix :: Matrix -> Int -> Int -> Bool
+isFinalMatrix m@(Matrix rows columns cells) step obs
+        | step < notObs = False
+        | or [ value cell == 0 | cell <- Set.elems cells ] = False
+        | not (and [ countInMatrix val m == 1 | val <- [1..notObs] ]) = False
+        | not (and [ or [ value cell1 + 1 == value cell2 | cell2 <- Set.elems cells, isAdjacent cell1 cell2 ]
+                                     | cell1 <- Set.elems cells,
                                       value cell1 /= fvalue,
                                       value cell1 /= (-1) ]) = False
-        | otherwise                                          = True
-        where fvalue = maximum [value cell | cell <- cells]
+        | otherwise = True
+        where fvalue = maximum [value cell | cell <- Set.elems cells]
+              notObs = rows * columns - obs
 
 instance Read Matrix where
     readsPrec _ input =
         let (matrixCells, rest) = parseMatrix input
-            rowNum              = maximum [ row cell | cell <- matrixCells ]
-            columnNum           = maximum [ column cell | cell <- matrixCells ]
+            rowNum              = maximum [ row cell | cell <- Set.elems matrixCells ]
+            columnNum           = maximum [ column cell | cell <- Set.elems matrixCells ]
             theMatrix           = Matrix rowNum columnNum matrixCells
         in [(theMatrix, rest) | isValidMatrix theMatrix]
 
 editMatrixCell :: Matrix -> Cell -> Matrix
-editMatrixCell (Matrix r c cells) newCell = Matrix r c [ if cell == newCell then newCell else cell  | cell <- cells ] 
+editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.fromList ([ if cell == newCell then newCell else cell | cell <- Set.elems cells ]) :: Set Cell )
 
-findCellByValue :: Matrix -> Int -> [Cell]
-findCellByValue m val =  [ cell | cell <- matrix m, value cell == val ]
+findCellByValue :: Matrix -> Int -> Set Cell
+findCellByValue m val = Set.filter (\cell -> value cell == val) $ matrix m
