@@ -58,7 +58,17 @@ instance Read Cell where
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
 
 getAdjacents :: Cell -> Int -> Int -> Int -> [Int] -> [Cell]
-getAdjacents (Cell r c v) rs cs s seeds = [Cell nr nc s | dr <- genShuffle seeds [-1, 0, 1], dc <- genShuffle seeds [-1, 0, 1], let (nr, nc) = (r + dr, c + dc), nr > 0, nr <= rs, nc > 0, nc <= cs]
+getAdjacents (Cell r c v) rs cs s seeds = [
+        Cell nr nc s |
+        dr <- genShuffle seeds [-1, 0, 1],
+        dc <- genShuffle seeds [-1, 0, 1],
+        let (nr, nc) = (r + dr, c + dc),
+        nr > 0,
+        nr <= rs,
+        nc > 0,
+        nc <= cs,
+        not $ dr == 0 && dc == 0
+    ]
 
 fisherYatesStep :: RandomGen g => (Map Int Int, g) -> (Int, Int) -> (Map Int Int, g)
 fisherYatesStep (m, gen) (i, x) = ((Map.insert j x . Map.insert i (m Map.! j)) m, gen')
