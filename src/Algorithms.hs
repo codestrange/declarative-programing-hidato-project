@@ -5,6 +5,7 @@ module Algorithms
 , solveAll
 , generateGame
 , generateRandom
+, validateTemplate
 ) where
 
 import System.Random
@@ -81,6 +82,15 @@ stepMatrix step m@(Matrix rs cs ma) prevCell map seeds = if Map.notMember step m
 
 buildMap :: Matrix -> Map Int Cell
 buildMap ma@(Matrix r c m) = Set.foldl (\acc cell -> Map.insert (value cell) cell acc) Map.empty m
+
+validateTemplate :: Matrix -> Bool
+validateTemplate (Matrix rn cn cells)
+      | sum [ 1 | degree <- degrees, degree == 0 ] > 0 = False 
+      | sum [ 1 | degree <- degrees, degree == 1 ] > 2 = False
+      | otherwise                                      = True
+      where degrees = [ length adjacents | cell <- Set.toList cells, value cell >= 0, 
+                        let adjacents = [ adjR | adj <- getAdjacents cell rn cn 0 [1..], let Just adjR = Set.lookupGE adj cells, adjR /= cell,value adjR > (-1)]]
+
 
 -- solveRecursiveBFS :: [(Matrix, Int)] -> [Matrix]
 -- solveRecursiveBFS [] = []
