@@ -21,16 +21,28 @@ genRCell rn cn val = do
                               c <- randomRIO (1, cn)
                               return (Cell r c val)
 
+genRCellFromSet :: Set Cell -> IO [Cell]
+genRCellFromSet set = if Set.null set
+      then do
+            return []
+      else do
+            let size = Set.size set
+            r <- randomRIO (0, size - 1)
+            let e = Set.elemAt r set
+            let newSet = Set.deleteAt r set
+            sets <- genRCellFromSet newSet
+            return $ e : sets
 
 generateRandom :: Int -> Int -> Float -> IO Matrix
-generateRandom rn cn ratio = do 
+generateRandom rn cn ratio = do
                               let obs_ratio = if ratio < 0 || ratio > 1 then 0.33 else ratio
                               let cant_obs = floor $ fromIntegral rn * fromIntegral cn * obs_ratio
-                              obs <- sequence [genRCell rn cn (-1) | _ <-[1..cant_obs]]
+                              let (Matrix _ _ cells) = darkMatrix rn cn
+                              randomCells <- genRCellFromSet cells
                               let matrix = blankMatrix rn cn
-                              let obs_matrix = foldl editMatrixCell matrix obs
+                              let obs_matrix = foldl editMatrixCell matrix (take cant_obs randomCells)
                               first_cell <- genRCell rn cn 1
-                              return (editMatrixCell obs_matrix first_cell)
+                              return $ editMatrixCell obs_matrix first_cell
 
 data Dificulty = Easy | Normal | Hard deriving (Ord, Eq, Show, Read)
 
@@ -46,14 +58,11 @@ generateGame rn cn ratio dif = do
                                 let gen = mkStdGen seed
                                 let seeds = randoms gen :: [Int]
                                 let solution = solve template seeds
-                                let cant_obs = countObstacles solution
-                                let total = rn * cn - cant_obs
+                                let setForRemove = Set.filter (\x -> let v = value x in v > 1 && v < rn * cn) (matrix solution) :: Set Cell
+                                randomCells <- genRCellFromSet setForRemove
+                                let total = Set.size setForRemove
                                 let cant_empty = floor $ fromIntegral total * emptyRatio dif
-                                rawEmpty <- sequence [genRCell rn cn 0 | _ <- [1..cant_empty]]
-                                let empty = filter (\cell -> let Just act = Set.lookupGE cell (matrix solution)
-                                                            in value act > 1 && value act < total)
-                                                rawEmpty
-                                let game = foldl editMatrixCell solution empty
+                                let game = foldl editMatrixCell solution ([Cell r c 0 | x <- take cant_empty randomCells, let r = row x, let c = column x])
                                 return game
 
 generate :: Matrix
