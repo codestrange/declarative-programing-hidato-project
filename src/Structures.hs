@@ -12,6 +12,7 @@ module Structures
 , getAdjacents
 , genShuffle
 , blankMatrix
+, darkMatrix
 ) where
 
 import Data.Char (isDigit)
@@ -151,7 +152,10 @@ parseMatrixRecursive rowNum (s:rest)
 parseMatrix = parseMatrixRecursive 1
 
 blankMatrix :: Int -> Int -> Matrix
-blankMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column 0| row <-[1..rows], column <- [1..columns]] :: Set Cell)
+blankMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column 0 | row <- [1..rows], column <- [1..columns]] :: Set Cell)
+
+darkMatrix :: Int -> Int -> Matrix
+darkMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column (-1) | row <- [1..rows], column <- [1..columns]] :: Set Cell)
 
 countInMatrix :: Int -> Matrix -> Int
 countInMatrix val (Matrix _ _ cells) =
