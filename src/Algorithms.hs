@@ -1,5 +1,5 @@
 module Algorithms
-( Dificulty(..)
+( Difficulty(..)
 , generate
 , solve
 , solveAll
@@ -8,21 +8,24 @@ module Algorithms
 , validateTemplate
 ) where
 
-import System.Random
-import Structures
+
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Maybe
 import Data.Set (Set, lookupMin, lookupMax)
 import qualified Data.Set as Set
 import Debug.Trace
-import Data.Map (Map)
-import qualified Data.Map as Map
+import Structures
+import System.Random
 import System.Timeout
-import Data.Maybe
+
 
 genRCell :: Int -> Int -> Int -> IO Cell
 genRCell rn cn val = do
       r <- randomRIO (1, rn)
       c <- randomRIO (1, cn)
       return $ Cell r c val
+
 
 genRCellFromSet :: Set Cell -> IO [Cell]
 genRCellFromSet set = if Set.null set
@@ -35,6 +38,7 @@ genRCellFromSet set = if Set.null set
             let newSet = Set.deleteAt r set
             sets <- genRCellFromSet newSet
             return $ e : sets
+
 
 generateRandom :: Int -> Int -> Float -> IO Matrix
 generateRandom rn cn ratio = do
@@ -52,12 +56,15 @@ generateRandom rn cn ratio = do
             result <- generateRandom rn cn ratio
             return result
 
-data Dificulty = Easy | Normal | Hard deriving (Ord, Eq, Show, Read)
 
-emptyRatio :: Dificulty -> Float
+data Difficulty = Easy | Normal | Hard deriving (Ord, Eq, Show, Read)
+
+
+emptyRatio :: Difficulty -> Float
 emptyRatio Easy = 50/100
 emptyRatio Normal = 60/100
 emptyRatio Hard = 70/100
+
 
 generateRandomGame :: Int -> Int -> Float -> IO Matrix
 generateRandomGame rn cn ratio = do
@@ -77,6 +84,7 @@ generateRandomGame rn cn ratio = do
             else do
                   return $ head solutions
 
+
 removeCells :: Matrix -> [Cell] -> Int -> Int -> [Int] -> Matrix
 removeCells sol@(Matrix rn cn cs) cells ite n seeds =
       if    null cells || ite >= n then
@@ -94,11 +102,12 @@ removeCells sol@(Matrix rn cn cs) cells ite n seeds =
                   else
                         removeCells sol tailCells (ite + 1) n seeds
 
-generateGame :: Int -> Int -> Float -> Dificulty -> IO Matrix
-generateGame rn cn ratio dif = do
-      maybeMatrix <- timeout 60000000 $ generateRandomGame rn cn ratio
+
+generateGame :: Int -> Int -> Float -> Difficulty -> Int -> IO (Bool, Matrix)
+generateGame rn cn ratio dif to = do
+      maybeMatrix <- timeout to $ generateRandomGame rn cn ratio
       if isNothing maybeMatrix then do
-            return $ error "Game not found"
+            return (False, blankMatrix 1 1)
       else do
             let solution = maybe (blankMatrix rn cn) (\x -> x) maybeMatrix
             let setForRemove = Set.filter (\x -> let v = value x in v > 1 && v < rn * cn) (matrix solution) :: Set Cell
@@ -109,10 +118,12 @@ generateGame rn cn ratio dif = do
             let gen = mkStdGen seed
             let seeds = randoms gen :: [Int]
             let game = removeCells solution randomCells 0 cant_empty seeds
-            return game
+            return (True, game)
+
 
 generate :: Matrix
 generate = read "{. x x x x x x x x \n . 8 x x x x x x x \n . . 11 x x x x x x \n 29 . 10 . x x x x x \n 30 . . . . x x x x \n . 31  1 38  .  . x x x \n . 32 . . 39 41 . x x \n . . . 22 . . 42 . x \n . . . . . . . 44 45}" :: Matrix
+
 
 stepMatrix :: Int -> Matrix -> Cell -> Map Int Cell -> [Int] -> [(Matrix, Cell)]
 stepMatrix step m@(Matrix rs cs ma) prevCell map seeds = if Map.notMember step map
@@ -125,8 +136,10 @@ stepMatrix step m@(Matrix rs cs ma) prevCell map seeds = if Map.notMember step m
       else  let actCell = map Map.! step
             in [newMatrix | isAdjacent actCell prevCell || value actCell == 1, let newMatrix = (m, actCell)]
 
+
 buildMap :: Matrix -> Map Int Cell
 buildMap ma@(Matrix r c m) = Set.foldl (\acc cell -> Map.insert (value cell) cell acc) Map.empty m
+
 
 validateTemplate :: Matrix -> Bool
 validateTemplate (Matrix rn cn cells)
@@ -137,14 +150,17 @@ validateTemplate (Matrix rn cn cells)
                         let adjacents = [ adjR | adj <- getAdjacents cell rn cn 0 [1..],
                                           let Just adjR = Set.lookupGE adj cells, adjR /= cell, value adjR == 0]]
 
+
 solveRecursiveDFS :: Matrix -> Int -> Cell -> Int -> Map Int Cell -> [Int] -> [Matrix]
 solveRecursiveDFS actualMatrix step prevCell obs map seeds
       | step == obs + 1 = [actualMatrix]
       | otherwise = let toAdd = stepMatrix step actualMatrix prevCell map seeds
                     in concat [ solveRecursiveDFS matrix (step + 1) prevCell obs map (tail seeds) | (matrix, prevCell) <- toAdd ]
 
+
 solveAll :: Matrix -> [Int] -> [Matrix]
 solveAll m = solveRecursiveDFS m 1 (Cell 0 0 0) (rows m * columns m  - countObstacles m) (buildMap m)
+
 
 solve :: Matrix -> [Int] -> Matrix
 solve m seeds = let solves = solveAll m seeds
