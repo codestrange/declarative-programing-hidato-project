@@ -26,8 +26,7 @@ genRCell rn cn val = do
 
 genRCellFromSet :: Set Cell -> IO [Cell]
 genRCellFromSet set = if Set.null set
-      then do
-            return []
+      then return []
       else do
             let size = Set.size set
             r <- randomRIO (0, size - 1)
@@ -46,11 +45,10 @@ generateRandom rn cn ratio = do
       let obs_matrix = foldl editMatrixCell matrix (take cant_obs randomCells)
       first_cell <- genRCell rn cn 1
       let newMatrix = editMatrixCell obs_matrix first_cell
-      if validateTemplate newMatrix then do
+      if validateTemplate newMatrix then
             return newMatrix
-      else do
-            result <- generateRandom rn cn ratio
-            return result
+      else
+            generateRandom rn cn ratio
 
 data Dificulty = Easy | Normal | Hard deriving (Ord, Eq, Show, Read)
 
@@ -62,20 +60,18 @@ emptyRatio Hard = 70/100
 generateRandomGame :: Int -> Int -> Float -> IO Matrix
 generateRandomGame rn cn ratio = do
       maybeTemplate <- timeout 1000000 $ generateRandom rn cn ratio
-      if isNothing maybeTemplate then do
-            game <- generateRandomGame rn cn ratio
-            return game
+      if isNothing maybeTemplate then
+            generateRandomGame rn cn ratio
       else do
-            let template = maybe (blankMatrix rn cn) (\x -> x) maybeTemplate
+            let template = maybe (blankMatrix rn cn) id maybeTemplate
             seed <- randomIO :: IO Int
             let gen = mkStdGen seed
             let seeds = randoms gen :: [Int]
             let solutions = solveAll template seeds
-            if null solutions then do
-                  game <- generateRandomGame rn cn ratio
-                  return game
-            else do
-                  return $ head solutions
+            if null solutions then
+                  generateRandomGame rn cn ratio
+            else
+              return $ head solutions
 
 removeCells :: Matrix -> [Cell] -> Int -> Int -> [Int] -> Matrix
 removeCells sol@(Matrix rn cn cs) cells ite n seeds =
@@ -97,10 +93,10 @@ removeCells sol@(Matrix rn cn cs) cells ite n seeds =
 generateGame :: Int -> Int -> Float -> Dificulty -> IO Matrix
 generateGame rn cn ratio dif = do
       maybeMatrix <- timeout 60000000 $ generateRandomGame rn cn ratio
-      if isNothing maybeMatrix then do
+      if isNothing maybeMatrix then
             return $ error "Game not found"
       else do
-            let solution = maybe (blankMatrix rn cn) (\x -> x) maybeMatrix
+            let solution = maybe (blankMatrix rn cn) id maybeMatrix
             let setForRemove = Set.filter (\x -> let v = value x in v > 1 && v < rn * cn) (matrix solution) :: Set Cell
             randomCells <- genRCellFromSet setForRemove
             let total = Set.size setForRemove
