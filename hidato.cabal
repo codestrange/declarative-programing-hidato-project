@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8990a2fc1a1f4fa5cf6bcf0dc27fc8585348d19663dd6d611e9d1f7fb613dc4c
+-- hash: be00057decf180595c875f0852db5de4a7bb552ba6b5d44ec64fabd77e70bd53
 
 name:           hidato
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       Algorithms
+      Console
       Structures
   other-modules:
       Paths_hidato
