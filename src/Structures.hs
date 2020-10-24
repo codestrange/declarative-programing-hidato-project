@@ -15,22 +15,26 @@ module Structures
 , darkMatrix
 ) where
 
+
 import Data.Char (isDigit)
 import Data.List
-import Data.Set (Set, lookupMin, lookupMax)
-import qualified Data.Set as Set
-import System.Random
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Set (Set, lookupMin, lookupMax)
+import qualified Data.Set as Set
 import Debug.Trace
+import System.Random
+
 
 data Cell = Cell { row :: Int
                 , column :: Int
                 , value :: Int
                 }
 
+
 instance Eq Cell where
     c1 == c2 = row c1 == row c2 && column c1 == column c2
+
 
 instance Ord Cell where
     compare cell1 cell2
@@ -38,8 +42,10 @@ instance Ord Cell where
         | column cell1 /= column cell2 = compare (column cell1) (column cell2)
         | otherwise = EQ
 
+
 instance Show Cell where
     show cell = "(" ++ show (row cell) ++ "," ++ show (column cell) ++ "," ++ show (value cell) ++ ")"
+
 
 instance Read Cell where
     readsPrec _ input =
@@ -57,6 +63,7 @@ instance Read Cell where
             [(Cell row column value, rest7) | 
                 opar == '(' && comma1 == comma2 && comma2 == ',' && cpar == ')']
 
+
 getAdjacents :: Cell -> Int -> Int -> Int -> [Int] -> [Cell]
 getAdjacents (Cell r c v) rs cs s seeds = [
         Cell nr nc s |
@@ -70,10 +77,12 @@ getAdjacents (Cell r c v) rs cs s seeds = [
         not $ dr == 0 && dc == 0
     ]
 
+
 fisherYatesStep :: RandomGen g => (Map Int Int, g) -> (Int, Int) -> (Map Int Int, g)
 fisherYatesStep (m, gen) (i, x) = ((Map.insert j x . Map.insert i (m Map.! j)) m, gen')
   where
     (j, gen') = randomR (0, i) gen
+
 
 fisherYates :: RandomGen g => g -> [Int] -> ([Int], g)
 fisherYates gen [] = ([], gen)
@@ -84,8 +93,10 @@ fisherYates gen l =
     numerate = zip [1..]
     initial x gen = (Map.singleton 0 x, gen)
 
+
 genShuffle :: [Int] -> [Int] -> [Int]
 genShuffle seeds list = let (xs, _) = fisherYates (mkStdGen $ head seeds) list in xs
+
 
 isAdjacent :: Cell -> Cell -> Bool
 isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)
@@ -93,6 +104,7 @@ isAdjacent (Cell f1 c1 v1) (Cell f2 c2 v2)
             | abs (f1 - f2) >= 2 || abs (c1 - c2) >= 2 = False
             | v1 == (-1) || v2 == (-1)                 = False
             | otherwise                                = True
+
 
 getCellChar :: Cell -> Int -> String
 getCellChar (Cell _ _ value) size
@@ -103,8 +115,10 @@ getCellChar (Cell _ _ value) size
         valueStr    = show value
         lenValueStr = length $ show value
 
+
 cellEqual :: Cell -> Cell -> Bool
 cellEqual x y = row x == row y && column x == column y && value x == value y
+
 
 cellEquals' :: [Cell] -> [Cell] -> Bool -> Bool
 callEquals' _ _ False = False
@@ -113,24 +127,30 @@ cellEquals' _ [] _ = False
 cellEquals' [] _ _ = False
 cellEquals' (x:xs) (y:ys) b = cellEquals' xs ys (cellEqual x y)
 
+
 cellEquals :: [Cell] -> [Cell] -> Bool
 cellEquals xs ys = cellEquals' xs ys True
+
 
 data Matrix = Matrix { rows :: Int
                      , columns :: Int
                      , matrix :: Set Cell
                      }
 
+
 instance Eq Matrix where
     m1 == m2 = rows m1 == rows m2 && columns m1 == columns m2 && cellEquals (Set.elems $ matrix m1) (Set.elems $ matrix m2)
 
+
 showMatrixRow :: [Cell] -> Int -> String
 showMatrixRow rowCells size = unwords [getCellChar cell size | cell <- rowCells ]
+
 
 instance Show Matrix where
     show m = "{" ++ intercalate "\n " [ showMatrixRow (sort (filter (\(Cell crow _ _) -> crow == row) (Set.elems $ matrix m))) maxSize |
                             row <- [1..(rows m)]] ++ "}\n" where
                             maxSize = maximum [length (getCellChar cell 0) | cell <- Set.elems $ matrix m]
+
 
 parseMatrixCell :: String -> (Int, String)
 parseMatrixCell "" = (-2, "")
@@ -141,6 +161,7 @@ parseMatrixCell (s:rest)
     | s == 'x'  = (-1, rest)
     | otherwise = (-2, s:rest)
 
+
 parseMatrixRowRecursive :: Int -> Int -> String -> (Set Cell, String)
 parseMatrixRowRecursive rowNum columnNum input = 
     let (_, rinput)    = span (' '==) input
@@ -150,7 +171,9 @@ parseMatrixRowRecursive rowNum columnNum input =
             parsedCell           = Cell rowNum columnNum value
         in (Set.insert parsedCell parsedCells, frest)
 
+
 parseMatrixRow rowNum = parseMatrixRowRecursive rowNum 1
+
 
 parseMatrixRecursive :: Int -> String -> (Set Cell, String)
 parseMatrixRecursive rowNum (s:rest)
@@ -159,29 +182,37 @@ parseMatrixRecursive rowNum (s:rest)
                                                 in (Set.union parsedRow parsedRows, rest2)
     | s == '}'                               = (Set.empty, rest)
 
+
 parseMatrix = parseMatrixRecursive 1
+
 
 blankMatrix :: Int -> Int -> Matrix
 blankMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column 0 | row <- [1..rows], column <- [1..columns]] :: Set Cell)
 
+
 darkMatrix :: Int -> Int -> Matrix
 darkMatrix rows columns = Matrix rows columns (Set.fromList [Cell row column (-1) | row <- [1..rows], column <- [1..columns]] :: Set Cell)
+
 
 countInMatrix :: Int -> Matrix -> Int
 countInMatrix val (Matrix _ _ cells) =
                     foldl (\acc cell -> if value cell == val then acc + 1 else acc) 0 cells
 
+
 countObstacles :: Matrix -> Int
 countObstacles = countInMatrix (-1) 
 
+
 countFree :: Matrix -> Int
 countFree = countInMatrix 0 
+
 
 isValidMatrix :: Matrix -> Bool
 isValidMatrix m = let allCells       = length (matrix m) == rows m * columns m
                       correctValues  = all (\(Cell _ _ val) -> val >= -1 && val <= rows m * columns m - countObstacles m) 
                                         (matrix m)                    
                   in correctValues && allCells
+
 
 isFinalMatrix :: Matrix -> Int -> Int -> Bool
 isFinalMatrix m@(Matrix rows columns cells) step obs
@@ -196,6 +227,7 @@ isFinalMatrix m@(Matrix rows columns cells) step obs
         where fvalue = maximum [value cell | cell <- Set.elems cells]
               notObs = rows * columns - obs
 
+
 instance Read Matrix where
     readsPrec _ input =
         let (matrixCells, rest) = parseMatrix input
@@ -204,8 +236,10 @@ instance Read Matrix where
             theMatrix           = Matrix rowNum columnNum matrixCells
         in [(theMatrix, rest) | isValidMatrix theMatrix]
 
+
 editMatrixCell :: Matrix -> Cell -> Matrix
 editMatrixCell (Matrix r c cells) newCell = Matrix r c (Set.insert newCell cells)
+
 
 findCellByValue :: Matrix -> Int -> Set Cell
 findCellByValue m val = Set.filter (\cell -> value cell == val) $ matrix m
