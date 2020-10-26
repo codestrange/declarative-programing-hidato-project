@@ -81,9 +81,9 @@ generateRandomGame rn cn ratio = do
               return $ head solutions
 
 
-removeCells :: Matrix -> [Cell] -> Int -> Int -> [Int] -> Matrix
-removeCells sol@(Matrix rn cn cs) cells ite n seeds =
-      if    null cells || ite >= n then
+removeCells :: Matrix -> [Cell] -> Int -> [Int] -> Matrix
+removeCells sol@(Matrix rn cn cs) cells n seeds =
+      if    null cells || n < 0 then
             sol
       else
             let   (headCell: tailCells) = cells
@@ -94,9 +94,9 @@ removeCells sol@(Matrix rn cn cs) cells ite n seeds =
                   solutions = solveAll matrix seeds
                   isUnix = length (take 2 solutions) < 2
             in    if isUnix then
-                        removeCells matrix tailCells (ite + 1) n seeds
+                        removeCells matrix tailCells (n - 1) seeds
                   else
-                        removeCells sol tailCells (ite + 1) n seeds
+                        removeCells sol tailCells n seeds
 
 
 generateGame :: Int -> Int -> Float -> Difficulty -> Int -> IO (Bool, Matrix)
@@ -106,14 +106,15 @@ generateGame rn cn ratio dif to = do
             return (False, blankMatrix 1 1)
       else do
             let solution = maybe (blankMatrix rn cn) id maybeMatrix
-            let setForRemove = Set.filter (\x -> let v = value x in v > 1 && v < rn * cn) (matrix solution) :: Set Cell
+            let maxElem = rn * cn - countObstacles solution
+            let setForRemove = Set.filter (\x -> let v = value x in v > 1 && v < maxElem) (matrix solution) :: Set Cell
             randomCells <- genRCellFromSet setForRemove
             let total = Set.size setForRemove
             let cant_empty = floor $ fromIntegral total * emptyRatio dif
             seed <- randomIO :: IO Int
             let gen = mkStdGen seed
             let seeds = randoms gen :: [Int]
-            let game = removeCells solution randomCells 0 cant_empty seeds
+            let game = removeCells solution randomCells cant_empty seeds
             return (True, game)
 
 
